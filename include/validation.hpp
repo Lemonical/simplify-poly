@@ -6,7 +6,7 @@
 
 namespace atpps {
 
-// This validates baseline polygon structure and will expand to full topology checks later
+// This validates ring cardinality and edge intersection topology constraints
 bool ValidatePolygonTopology(const Polygon& polygon, std::string& errorMessage);
 
 }  // namespace atpps
