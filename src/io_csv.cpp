@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <fstream>
+#include <iomanip>
 #include <map>
 #include <sstream>
 #include <stdexcept>
@@ -56,6 +57,19 @@ bool IsExpectedHeader(const std::string& headerLine) {
         && TrimCopy(fields[1]) == "vertex_id"
         && TrimCopy(fields[2]) == "x"
         && TrimCopy(fields[3]) == "y";
+}
+
+// This prints coordinates with expected-style significant digits while keeping compact decimal text
+std::string FormatCoordinate(const double value) {
+    std::ostringstream stream;
+    stream << std::setprecision(10) << std::defaultfloat << value;
+    std::string text = stream.str();
+
+    if (text == "-0" || text == "-0.0") {
+        return "0";
+    }
+
+    return text;
 }
 
 }  // namespace
@@ -156,7 +170,9 @@ void WritePolygonCsv(std::ostream& output, const Polygon& polygon) {
     for (const Ring& ring : polygon.rings) {
         for (std::size_t vertexId = 0U; vertexId < ring.vertices.size(); ++vertexId) {
             const Point& point = ring.vertices[vertexId];
-            output << ring.ringId << ',' << vertexId << ',' << point.x << ',' << point.y << '\n';
+            output << ring.ringId << ',' << vertexId << ','
+                   << FormatCoordinate(point.x) << ','
+                   << FormatCoordinate(point.y) << '\n';
         }
     }
 }
