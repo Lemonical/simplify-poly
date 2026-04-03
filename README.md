@@ -79,22 +79,22 @@ Provided datasets and expected outputs are in `test_cases/`.
 
 ## Test case match status
 
-The table below shows whether current output matches the official expected files exactly.
+The table below shows whether current output matches the expected output files exactly (byte-for-byte `diff`).
 
-| Case | Target vertices | Matches expected |
-|---|---:|---|
-| rectangle_with_two_holes | 7 | PASS |
-| cushion_with_hexagonal_hole | 13 | PASS |
-| blob_with_two_holes | 17 | FAIL |
-| wavy_with_three_holes | 21 | FAIL |
-| lake_with_two_islands | 17 | FAIL |
-| original_01 | 99 | FAIL |
-| original_02 | 99 | FAIL |
-| original_03 | 99 | FAIL |
-| original_04 | 99 | FAIL |
-| original_05 | 99 | FAIL |
-| original_06 | 99 | FAIL |
-| original_07 | 99 | FAIL |
-| original_08 | 99 | FAIL |
-| original_09 | 99 | FAIL |
-| original_10 | 99 | FAIL |
+| Case | Target vertices | Status | Notes |
+|---|---:|---|---|
+| rectangle_with_two_holes | 7 | PASS |  |
+| cushion_with_hexagonal_hole | 13 | PASS |  |
+| blob_with_two_holes | 17 | FAIL |  |
+| wavy_with_three_holes | 21 | FAIL |  |
+| lake_with_two_islands | 17 | FAIL |  |
+| original_01 | 99 | FAIL |  |
+| original_02 | 99 | FAIL |  |
+| original_03 | 99 | FAIL |  |
+| original_04 | 99 | FAIL |  |
+| original_05 | 99 | FAIL |  |
+| original_06 | 99 | FAIL |  |
+| original_07 | 99 | FAIL |  |
+| original_08 | 99 | FAIL |  |
+| original_09 | 99 | FAIL | topology error: ring 0: ring self-intersection detected |
+| original_10 | 99 | FAIL |  |
