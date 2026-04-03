@@ -14,6 +14,17 @@ namespace {
 // This caps expensive global validation on extremely large single-ring datasets
 constexpr std::size_t kValidationVertexLimit = 50000U;
 
+// This env toggle allows opting back into old timeout-focused behavior for very large single-ring startup validation
+bool ShouldSkipLargeSingleRingInputValidation() {
+    const char* raw = std::getenv("ATPPS_SKIP_LARGE_SINGLE_RING_INPUT_VALIDATION");
+    if (raw == nullptr || raw[0] == '\0') {
+        return false;
+    }
+
+    const std::string value(raw);
+    return value == "1" || value == "true" || value == "TRUE" || value == "on" || value == "ON";
+}
+
 // This centralizes usage text so error and help paths stay consistent
 void PrintUsage(const char* executableName) {
     std::cerr << "Usage: " << executableName << " <input_file> <target_vertices>\n";
@@ -51,8 +62,11 @@ int main(int argc, char** argv) {
     }
 
     const std::size_t inputVertexCount = atpps::CountTotalVertices(inputPolygon);
+    const bool skipLargeSingleRingInputValidation = ShouldSkipLargeSingleRingInputValidation();
     const bool skipGlobalValidation =
-        inputPolygon.rings.size() == 1U && inputVertexCount >= kValidationVertexLimit;
+        skipLargeSingleRingInputValidation
+        && inputPolygon.rings.size() == 1U
+        && inputVertexCount >= kValidationVertexLimit;
 
     if (!skipGlobalValidation) {
         std::string topologyError;
@@ -72,9 +86,7 @@ int main(int argc, char** argv) {
     // This computes assignment metrics even in stub mode so output shape is stable
     const double inputArea = atpps::ComputeTotalSignedArea(inputPolygon);
     const double outputArea = atpps::ComputeTotalSignedArea(result.polygon);
-    const double fallbackDisplacement = atpps::ComputeTotalArealDisplacement(inputPolygon, result.polygon);
-    const double arealDisplacement =
-        (result.totalArealDisplacement > 0.0) ? result.totalArealDisplacement : fallbackDisplacement;
+    const double arealDisplacement = result.totalArealDisplacement;
 
     // This uses scientific output format to match expected test file style
     std::cout << std::scientific << std::setprecision(6);

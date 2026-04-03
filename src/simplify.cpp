@@ -416,150 +416,95 @@ struct SingleRingPairCandidateWorse {
     }
 };
 
-// This threshold switches extremely large single-ring inputs to linear-time deterministic sampling
-constexpr std::size_t kHugeSingleRingVertexThreshold = 50000U;
+/****************************
+*      CORE THRESHOLDS      *
+*****************************/
 
-// This bounds multi-ring sequence search width for deterministic runtime
-constexpr std::size_t kMultiRingBeamWidth = 6U;
+constexpr std::size_t kHugeSingleRingVertexThreshold = 50000U;  // This threshold switches extremely large single-ring inputs to linear-time deterministic sampling
+constexpr std::size_t kMultiRingBeamWidth = 6U;                 // This bounds multi-ring sequence search width for deterministic runtime
+constexpr std::size_t kMultiRingBranchFactor = 6U;              // This bounds per-state candidate expansion during multi-ring sequence search
+constexpr double kRingRoleComparableCostMultiplier = 1.0;       // This multiplier defines when two pair-collapse costs are close enough to let ring-role priority decide
+constexpr double kMultiRingMovementWeight = 1e-12;              // This scales movement influence in multi-ring pair-collapse scoring
 
-// This bounds per-state candidate expansion during multi-ring sequence search
-constexpr std::size_t kMultiRingBranchFactor = 6U;
+/****************************
+*    SINGLE RING SCORING    *
+*****************************/
 
-// This multiplier defines when two pair-collapse costs are close enough to let ring-role priority decide
-constexpr double kRingRoleComparableCostMultiplier = 1.0;
+constexpr double kSingleRingMovementWeight = 0.1;                 // This scales movement influence in single-ring heap scoring to calibrate sequence behavior
+constexpr double kSingleRingMovementStartFactor = 1.0;            // This scales single-ring movement influence at simplification start so early-stage behavior can be calibrated
+constexpr double kSingleRingMovementEndFactor = 1.0;              // This scales single-ring movement influence near target so late-stage behavior can be calibrated
+constexpr double kSingleRingFeaturePenaltyMultiplier = 0.75;      // This scales early-stage corner-preservation pressure in single-ring collapse scoring
+constexpr int kSingleRingStagedPolicyMode = 0;                    // This controls whether staged single-ring corner-preservation policy is enabled
+constexpr int kSingleRingScoreMode = 0;                           // This controls which single-ring base score formula is used before optional staged corner penalties
+constexpr int kSingleRingDispersionMode = 0;                      // This controls whether deterministic single-ring dispersion policy is disabled, hard-filtered, or soft-penalized
+constexpr std::size_t kSingleRingDispersionWindow = 8U;           // This defines how many collapse steps count as locally recent for dispersion logic
+constexpr double kSingleRingDispersionPenaltyMultiplier = 1.5;    // This scales soft dispersion penalties when nearby collapses happened very recently
 
-// This scales movement influence in multi-ring pair-collapse scoring
-constexpr double kMultiRingMovementWeight = 1e-12;
+/****************************
+*   SINGLE RING SELECTION   *
+*****************************/
 
-// This scales movement influence in single-ring heap scoring to calibrate sequence behavior
-constexpr double kSingleRingMovementWeight = 0.1;
-
-// This scales single-ring movement influence at simplification start so early-stage behavior can be calibrated
-constexpr double kSingleRingMovementStartFactor = 1.0;
-
-// This scales single-ring movement influence near target so late-stage behavior can be calibrated
-constexpr double kSingleRingMovementEndFactor = 1.0;
-
-// This scales early-stage corner-preservation pressure in single-ring collapse scoring
-constexpr double kSingleRingFeaturePenaltyMultiplier = 0.75;
-
-// This controls whether staged single-ring corner-preservation policy is enabled
-constexpr int kSingleRingStagedPolicyMode = 0;
-
-// This controls which single-ring base score formula is used before optional staged corner penalties
-constexpr int kSingleRingScoreMode = 0;
-
-// This controls whether deterministic single-ring dispersion policy is disabled, hard-filtered, or soft-penalized
-constexpr int kSingleRingDispersionMode = 0;
-
-// This defines how many collapse steps count as locally recent for dispersion logic
-constexpr std::size_t kSingleRingDispersionWindow = 8U;
-
-// This scales soft dispersion penalties when nearby collapses happened very recently
-constexpr double kSingleRingDispersionPenaltyMultiplier = 1.5;
-
-// This controls whether single-ring collapse always takes heap-best candidate or uses windowed dispersion-aware tie selection
 // Mode 4 keeps cost-first ordering and only applies bucket-age preference when costs are comparable
 // Mode 5 adds corner-smoothness preference inside comparable-cost cohorts
 // Mode 6 adaptively switches between mode 3 and mode 4 based on one-step window cost spread
 // Mode 7 adaptively switches between mode 1 and mode 3 based on initial ring vertex count
-constexpr int kSingleRingSelectionMode = 7;
+constexpr int kSingleRingSelectionMode = 7;                        // This controls whether single-ring collapse always takes heap-best candidate or uses windowed dispersion-aware tie selection
+constexpr std::size_t kSingleRingAdaptiveSizeThreshold = 2000U;    // This defines the initial-vertex threshold where adaptive mode 7 switches from mode 1 (small rings) to mode 3 (larger rings)
+constexpr std::size_t kSingleRingSelectionWindow = 8U;             // This bounds how many valid heap candidates are considered in one windowed single-ring selection step
+constexpr int kSingleRingWindowPoolMode = 1;                       // This controls whether single-ring window candidates are composed from an expanded pooled frontier before prefiltering
+constexpr std::size_t kSingleRingWindowPoolExpandFactor = 2U;      // This expands pooled frontier size before deterministic downselection into the final single-ring window
+constexpr std::size_t kSingleRingWindowPoolMinCount = 8U;          // This avoids pool-composition logic when too few pooled candidates are available
 
-// This defines the initial-vertex threshold where adaptive mode 7 switches from mode 1 (small rings) to mode 3 (larger rings)
-constexpr std::size_t kSingleRingAdaptiveSizeThreshold = 2000U;
+/****************************
+*  PROGRESS SCHEDULE BANDS  *
+****************************/
 
-// This bounds how many valid heap candidates are considered in one windowed single-ring selection step
-constexpr std::size_t kSingleRingSelectionWindow = 8U;
+constexpr int kSingleRingProgressScheduleMode = 0;              // This controls single-ring progress schedules: 0 off, 1 pool-only, 2 pool plus prefilter thresholds
+constexpr double kSingleRingWindowPoolExpandEarly = 3.0;        // This sets single-ring pool expansion in the early phase when most removals remain
+constexpr double kSingleRingWindowPoolExpandMid = 2.0;          // This sets single-ring pool expansion in the mid phase when roughly half removals remain
+constexpr double kSingleRingWindowPoolExpandLate = 1.5;         // This sets single-ring pool expansion in the late phase near the target vertex count
 
-// This controls whether single-ring window candidates are composed from an expanded pooled frontier before prefiltering
-constexpr int kSingleRingWindowPoolMode = 1;
+/****************************
+*    WINDOW PREFILTERING    *
+*****************************/
 
-// This expands pooled frontier size before deterministic downselection into the final single-ring window
-constexpr std::size_t kSingleRingWindowPoolExpandFactor = 2U;
+constexpr int kSingleRingWindowPrefilterMode = 1;                      // This controls whether deterministic single-ring window prefiltering is disabled or displacement-percentile based
+constexpr double kSingleRingWindowPrefilterPercentile = 0.25;          // This keeps only low-displacement candidates up to this percentile inside one single-ring selection window
+constexpr double kSingleRingWindowPrefilterEarly = 0.35;               // This sets displacement prefilter percentile in the early phase when broad shape pruning is still acceptable
+constexpr double kSingleRingWindowPrefilterMid = 0.25;                 // This sets displacement prefilter percentile in the mid phase
+constexpr double kSingleRingWindowPrefilterLate = 0.15;                // This sets displacement prefilter percentile in the late phase when picks should be tighter
+constexpr std::size_t kSingleRingWindowPrefilterMinCount = 4U;         // This avoids applying window prefilter logic on very small candidate windows
+constexpr int kSingleRingWindowCostPrefilterMode = 1;                  // This controls whether deterministic single-ring window cost-prefiltering is disabled or enabled
+constexpr double kSingleRingWindowCostPrefilterPercentile = 0.5;       // This keeps only low-cost candidates up to this percentile after displacement prefiltering
+constexpr double kSingleRingWindowCostPrefilterEarly = 0.70;           // This sets cost prefilter percentile in the early phase to keep more alternatives alive
+constexpr double kSingleRingWindowCostPrefilterMid = 0.50;             // This sets cost prefilter percentile in the mid phase
+constexpr double kSingleRingWindowCostPrefilterLate = 0.35;            // This sets cost prefilter percentile in the late phase for tighter final edits
+constexpr std::size_t kSingleRingWindowCostPrefilterMinCount = 3U;     // This avoids applying window cost-prefilter logic on very small already-prefiltered windows
 
-// This avoids pool-composition logic when too few pooled candidates are available
-constexpr std::size_t kSingleRingWindowPoolMinCount = 8U;
+/****************************
+*      AGE TIE HANDLING     *
+*****************************/
 
-// This controls single-ring progress schedules: 0 off, 1 pool-only, 2 pool plus prefilter thresholds
-constexpr int kSingleRingProgressScheduleMode = 0;
+constexpr int kSingleRingWindowAgePrefilterMode = 0;                   // This controls whether deterministic single-ring recent-age prefiltering is disabled, always enabled, or enabled only for comparable-cost pools
+constexpr double kSingleRingWindowAgePrefilterPercentile = 0.5;        // This keeps only a top fraction of high recent-age candidates from the post-cost pool
+constexpr std::size_t kSingleRingWindowAgePrefilterMinCount = 3U;      // This avoids applying window recent-age prefilter logic on very small pools
+constexpr std::size_t kSingleRingBucketCount = 32U;                    // This sets how many deterministic arc buckets are used when bucketed single-ring selection mode is active
+constexpr std::size_t kSingleRingTraceSteps = 200U;                    // This bounds how many single-ring collapse steps are written to trace so long runs remain inspectable
+constexpr double kSingleRingSelectionTieCostMultiplier = 0.1;          // This defines when single-ring candidate costs are comparable enough for recent-age tie preference
+constexpr double kSingleRingAdaptiveModeCostSpreadThreshold = 0.08;    // This defines when adaptive single-ring selection mode treats one window as tight-cost and switches to mode-4 behavior
 
-// This sets single-ring pool expansion in the early phase when most removals remain
-constexpr double kSingleRingWindowPoolExpandEarly = 3.0;
+/****************************
+*      TOPOLOGY GUARDS      *
+*****************************/
 
-// This sets single-ring pool expansion in the mid phase when roughly half removals remain
-constexpr double kSingleRingWindowPoolExpandMid = 2.0;
+constexpr int kSingleRingTopologyGuardMode = 1;                     // This controls whether accepted single-ring pair collapses are filtered by a local self-intersection guard
+constexpr std::size_t kSingleRingTopologyGuardVertexLimit = 20000U; // This caps the ring size where the single-ring topology guard runs so very large cases stay tractable
+constexpr int kMultiRingDepthQuotaMode = 0;                         // This controls whether multi-ring candidate truncation enforces depth-parity quotas
+constexpr int kMultiRingNormalizedScoreMode = 0;                    // This controls whether multi-ring pair-collapse scoring uses local scale-normalized terms
 
-// This sets single-ring pool expansion in the late phase near the target vertex count
-constexpr double kSingleRingWindowPoolExpandLate = 1.5;
-
-// This controls whether deterministic single-ring window prefiltering is disabled or displacement-percentile based
-constexpr int kSingleRingWindowPrefilterMode = 1;
-
-// This keeps only low-displacement candidates up to this percentile inside one single-ring selection window
-constexpr double kSingleRingWindowPrefilterPercentile = 0.25;
-
-// This sets displacement prefilter percentile in the early phase when broad shape pruning is still acceptable
-constexpr double kSingleRingWindowPrefilterEarly = 0.35;
-
-// This sets displacement prefilter percentile in the mid phase
-constexpr double kSingleRingWindowPrefilterMid = 0.25;
-
-// This sets displacement prefilter percentile in the late phase when picks should be tighter
-constexpr double kSingleRingWindowPrefilterLate = 0.15;
-
-// This avoids applying window prefilter logic on very small candidate windows
-constexpr std::size_t kSingleRingWindowPrefilterMinCount = 4U;
-
-// This controls whether deterministic single-ring window cost-prefiltering is disabled or enabled
-constexpr int kSingleRingWindowCostPrefilterMode = 1;
-
-// This keeps only low-cost candidates up to this percentile after displacement prefiltering
-constexpr double kSingleRingWindowCostPrefilterPercentile = 0.5;
-
-// This sets cost prefilter percentile in the early phase to keep more alternatives alive
-constexpr double kSingleRingWindowCostPrefilterEarly = 0.70;
-
-// This sets cost prefilter percentile in the mid phase
-constexpr double kSingleRingWindowCostPrefilterMid = 0.50;
-
-// This sets cost prefilter percentile in the late phase for tighter final edits
-constexpr double kSingleRingWindowCostPrefilterLate = 0.35;
-
-// This avoids applying window cost-prefilter logic on very small already-prefiltered windows
-constexpr std::size_t kSingleRingWindowCostPrefilterMinCount = 3U;
-
-// This controls whether deterministic single-ring recent-age prefiltering is disabled, always enabled, or enabled only for comparable-cost pools
-constexpr int kSingleRingWindowAgePrefilterMode = 0;
-
-// This keeps only a top fraction of high recent-age candidates from the post-cost pool
-constexpr double kSingleRingWindowAgePrefilterPercentile = 0.5;
-
-// This avoids applying window recent-age prefilter logic on very small pools
-constexpr std::size_t kSingleRingWindowAgePrefilterMinCount = 3U;
-
-// This sets how many deterministic arc buckets are used when bucketed single-ring selection mode is active
-constexpr std::size_t kSingleRingBucketCount = 32U;
-
-// This bounds how many single-ring collapse steps are written to trace so long runs remain inspectable
-constexpr std::size_t kSingleRingTraceSteps = 200U;
-
-// This defines when single-ring candidate costs are comparable enough for recent-age tie preference
-constexpr double kSingleRingSelectionTieCostMultiplier = 0.1;
-
-// This defines when adaptive single-ring selection mode treats one window as tight-cost and switches to mode-4 behavior
-constexpr double kSingleRingAdaptiveModeCostSpreadThreshold = 0.08;
-
-// This controls whether accepted single-ring pair collapses are filtered by a local self-intersection guard
-constexpr int kSingleRingTopologyGuardMode = 1;
-
-// This caps the ring size where the single-ring topology guard runs so very large cases stay tractable
-constexpr std::size_t kSingleRingTopologyGuardVertexLimit = 20000U;
-
-// This controls whether multi-ring candidate truncation enforces depth-parity quotas
-constexpr int kMultiRingDepthQuotaMode = 0;
-
-// This controls whether multi-ring pair-collapse scoring uses local scale-normalized terms
-constexpr int kMultiRingNormalizedScoreMode = 0;
+/****************************
+*      ENV READ HELPERS     *
+*****************************/
 
 // This reads one unsigned integer env value once and clamps it to a safe deterministic range
 std::size_t ReadEnvSizeTClamped(
