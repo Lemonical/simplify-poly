@@ -7,6 +7,7 @@ This project implements a C++17 command line tool that simplifies polygon geomet
 - Program name: `simplify`
 - Source entry point: `src/main.cpp`
 - Build system: `Makefile`
+- Git repository: https://github.com/Lemonical/simplify-poly
 
 ## Build
 
@@ -20,6 +21,26 @@ Clean build artifacts:
 
 ```bash
 make clean
+```
+
+## Test scripts
+
+If your environment includes wrapper scripts named `./run_test` and `./run_evaluations`, run those; otherwise run the included `.sh` scripts below.
+
+Run assignment test cases:
+
+```bash
+chmod +x run_test_cases.sh
+./run_test
+./run_test_cases.sh
+```
+
+Run experimental evaluations:
+
+```bash
+chmod +x run_experimental_evaluations.sh
+./run_evaluations
+./run_experimental_evaluations.sh
 ```
 
 ## Usage
